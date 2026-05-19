@@ -1,8 +1,9 @@
 package com.example.md4ss10.controllers;
 
-import com.example.md4ss10.dto.UserLoginDTO;
 import com.example.md4ss10.dto.UserRegisterDTO;
-import com.example.md4ss10.models.User;
+import com.example.md4ss10.dto.request.LoginRequestDTO;
+import com.example.md4ss10.dto.response.LoginResponseDTO;
+import com.example.md4ss10.services.AuthService;
 import com.example.md4ss10.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,9 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuthService  authService;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @Valid @RequestBody UserRegisterDTO dto
@@ -23,7 +27,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO){
-        return userService.login(userLoginDTO);
+    public LoginResponseDTO login(
+            @Valid @RequestBody LoginRequestDTO request
+    ) {
+        return authService.login(request);
     }
 }
