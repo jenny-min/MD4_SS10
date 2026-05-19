@@ -25,7 +25,9 @@ public class UserDetailServiceCustom implements UserDetailsService {
             throw new UsernameNotFoundException(username);
         }
         List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString()));
+        grantedAuthorities.add(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole())
+        );
 
         return new UserPrincipal(user,grantedAuthorities);
     }

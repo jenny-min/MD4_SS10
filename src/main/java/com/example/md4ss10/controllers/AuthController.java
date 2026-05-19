@@ -16,9 +16,10 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    @ResponseBody
-    public User register(@Valid @RequestBody UserRegisterDTO userRegisterDTO){
-       return userService.register(userRegisterDTO);
+    public ResponseEntity<?> register(
+            @Valid @RequestBody UserRegisterDTO dto
+    ){
+        return userService.register(dto);
     }
 
     @PostMapping("/login")

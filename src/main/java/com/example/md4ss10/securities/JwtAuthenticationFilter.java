@@ -24,33 +24,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private UserDetailServiceCustom userDetailsServiceCustom;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        try {
-            // Lấy token từ header
-            String token = getJwtFromRequest(request);
+        String path = request.getServletPath();
 
-            // Kiểm tra token và validate
-            if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
-                String username = jwtProvider.getUsernameFromToken(token);
-                UserDetails userDetails = userDetailsServiceCustom.loadUserByUsername(username);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (Exception e) {
-            // Lỗi chung khác
-            request.setAttribute("error_message", "Lỗi xác thực Token: " + e.getMessage());
+        // bỏ qua auth APIs
+        if (path.startsWith("/api/v1/auth")) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // Quan trọng: Dù lỗi hay không, vẫn cho filter chạy tiếp.
-        // Nếu lỗi -> SecurityContext rỗng -> Spring Security sẽ chặn ở cửa sau và gọi EntryPoint.
+        try {
+
+            String token = getJwtFromRequest(request);
+
+            if (StringUtils.hasText(token)
+                    && jwtProvider.validateToken(token)) {
+
+                String username =
+                        jwtProvider.getUsernameFromToken(token);
+
+                UserDetails userDetails =
+                        userDetailsServiceCustom
+                                .loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authentication);
+            }
+
+        } catch (Exception e) {
+
+            request.setAttribute(
+                    "error_message",
+                    "Lỗi xác thực Token: " + e.getMessage()
+            );
+        }
+
         filterChain.doFilter(request, response);
     }
-
     // Hàm getJwtFromRequest giữ nguyên như bài trước
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
