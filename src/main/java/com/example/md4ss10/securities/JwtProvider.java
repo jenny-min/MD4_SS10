@@ -1,9 +1,7 @@
 package com.example.md4ss10.securities;
 
 import com.example.md4ss10.models.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -52,10 +50,20 @@ public class JwtProvider {
 
             return true;
 
+        } catch (ExpiredJwtException e) {
+
+            System.out.println("Token hết hạn");
+
+        } catch (MalformedJwtException e) {
+
+            System.out.println("Token sai định dạng");
+
         } catch (Exception e) {
 
-            return false;
+            System.out.println("Token không hợp lệ");
         }
+
+        return false;
     }
 
     public String getUsernameFromToken(String token){

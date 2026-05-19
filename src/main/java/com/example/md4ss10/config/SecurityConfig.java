@@ -1,5 +1,6 @@
 package com.example.md4ss10.config;
 
+import com.example.md4ss10.securities.JwtAuthenticationEntryPoint;
 import com.example.md4ss10.securities.JwtAuthenticationFilter;
 import com.example.md4ss10.securities.UserDetailServiceCustom;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
     private UserDetailServiceCustom userDetailServiceCustom;
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -61,12 +64,18 @@ public class SecurityConfig {
                         )
                 )
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/**"
-                        ).permitAll()
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                jwtAuthenticationEntryPoint
+                        )
+                )
 
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**")
+                        .permitAll()
+
+                        .anyRequest()
+                        .authenticated()
                 )
 
                 .addFilterBefore(
