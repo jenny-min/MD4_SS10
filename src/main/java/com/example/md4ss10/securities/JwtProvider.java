@@ -12,8 +12,8 @@ import java.util.Date;
 
 @Component
 public class JwtProvider {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
+
+    private final String SECRET_KEY = "mySecretKey";
 
     @Value("${jwt.expiration}")
     private long EXPIRATION;
@@ -40,19 +40,19 @@ public class JwtProvider {
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
+
     }
 
     public boolean validateToken(String token){
-
         try {
 
             Jwts.parser()
-                    .setSigningKey(secret)
+                    .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(token);
 
             return true;
 
-        } catch (Exception e){
+        } catch (Exception e) {
 
             return false;
         }
@@ -61,7 +61,7 @@ public class JwtProvider {
     public String getUsernameFromToken(String token){
 
         return Jwts.parser()
-                .setSigningKey(secret)
+                .setSigningKey(SECRET_KEY)
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -69,13 +69,16 @@ public class JwtProvider {
 
     public String generateToken(Authentication authentication) {
 
-        String username = authentication.getName();
-
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(authentication.getName())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + 86400000)
+                )
+                .signWith(
+                        SignatureAlgorithm.HS512,
+                        SECRET_KEY
+                )
                 .compact();
     }
 }

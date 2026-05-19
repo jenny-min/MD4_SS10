@@ -1,6 +1,5 @@
 package com.example.md4ss10.securities;
 
-import com.example.md4ss10.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,9 +20,8 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtProvider jwtProvider;
-
     @Autowired
-    private UserDetailServiceCustom userDetailsServiceCustom;
+    private UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -30,27 +30,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String path = request.getServletPath();
+        // Lấy header Authorization
+        String authHeader = request.getHeader("Authorization");
 
-        // bỏ qua auth APIs
-        if (path.startsWith("/api/v1/auth")) {
-            filterChain.doFilter(request, response);
-            return;
+        String token = null;
+        String username = null;
+
+        // Bearer eyJhbGc...
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+            token = authHeader.substring(7);
+
+            username = jwtProvider.getUsernameFromToken(token);
         }
 
-        try {
+        // Nếu có username và chưa login
+        if (username != null
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            String token = getJwtFromRequest(request);
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(username);
 
-            if (StringUtils.hasText(token)
-                    && jwtProvider.validateToken(token)) {
-
-                String username =
-                        jwtProvider.getUsernameFromToken(token);
-
-                UserDetails userDetails =
-                        userDetailsServiceCustom
-                                .loadUserByUsername(username);
+            // validate token
+            if (jwtProvider.validateToken(token)) {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
@@ -59,17 +61,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 userDetails.getAuthorities()
                         );
 
-                SecurityContextHolder
-                        .getContext()
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request)
+                );
+
+                // Gắn user vào SecurityContext
+                SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
             }
-
-        } catch (Exception e) {
-
-            request.setAttribute(
-                    "error_message",
-                    "Lỗi xác thực Token: " + e.getMessage()
-            );
         }
 
         filterChain.doFilter(request, response);
