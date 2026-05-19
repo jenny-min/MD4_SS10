@@ -41,12 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } catch (ExpiredJwtException e) {
-            // Token hết hạn
-            request.setAttribute("error_message", "Token đã hết hạn vui lòng đăng nhập lại!");
-        } catch (MalformedJwtException e) {
-            // Token sai định dạng (vỡ, sửa đổi...)
-            request.setAttribute("error_message", "Token không đúng định dạng!");
         } catch (Exception e) {
             // Lỗi chung khác
             request.setAttribute("error_message", "Lỗi xác thực Token: " + e.getMessage());
