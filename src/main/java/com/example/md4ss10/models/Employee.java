@@ -22,4 +22,12 @@ public class Employee {
 
     @Column(name = "salary")
     private double salary;
+
+    private String avatarUrl;
+
+    public void setEmail(String email) {
+    }
+
+    public void setDepartment(String department) {
+    }
 }
